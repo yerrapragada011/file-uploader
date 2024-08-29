@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Home</title>
+  </head>
+  <body>
+    <% if (user) { %>
+    <p>
+      Welcome, <%= user.email %> | <a href="/logout">Logout</a> |
+      <a href="/upload">Upload File</a>
+    </p>
+    <% } else { %>
+    <p><a href="/login">Login</a> | <a href="/register">Register</a></p>
+    <% } %>
+    <h1>Home Page</h1>
+  </body>
+</html>

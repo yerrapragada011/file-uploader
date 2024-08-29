@@ -2,11 +2,13 @@ const express = require('express')
 const session = require('express-session')
 const passport = require('passport')
 const path = require('path')
-const multer = require('multer')
 const { PrismaSessionStore } = require('@quixo3/prisma-session-store')
+const { PrismaClient } = require('@prisma/client')
+const indexRouter = require('./routes/index')
+
+const prisma = new PrismaClient()
 
 const app = express()
-const PORT = process.env.PORT || 3000
 
 require('./config/passport')
 
@@ -34,6 +36,10 @@ app.use(
 
 app.use(passport.initialize())
 app.use(passport.session())
+
+app.use('/', indexRouter)
+
+const PORT = process.env.PORT || 3000
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Example app listening on port ${PORT}`)
