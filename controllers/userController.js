@@ -5,7 +5,27 @@ const bcrypt = require('bcrypt')
 const prisma = new PrismaClient()
 
 exports.userHomePage = async (req, res) => {
-  res.render('index', { user: req.user })
+  if (!req.user) {
+    return res.render('index', { user: null, folders: [] })
+  }
+
+  const userId = req.user.id
+
+  try {
+    const folders = await prisma.folder.findMany({
+      where: {
+        userId: userId
+      }
+    })
+
+    res.render('index', {
+      user: req.user,
+      folders: folders
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).send('Internal Server Error')
+  }
 }
 
 exports.registerUserGet = async (req, res) => {

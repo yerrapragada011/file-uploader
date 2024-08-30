@@ -33,13 +33,46 @@ router.get('/login', userController.loginUserGet)
 
 router.post('/login', userController.loginUserPost)
 
-router.get('/upload', ensureAuthenticated, fileController.uploadFileGet)
+router.get('/upload-file', ensureAuthenticated, fileController.uploadFileGet)
 
 router.post(
-  '/upload',
+  '/upload-file',
   ensureAuthenticated,
   upload.single('file'),
   fileController.uploadFilePost
+)
+
+router.get(
+  '/create-folder',
+  ensureAuthenticated,
+  fileController.createFolderGet
+)
+
+router.post(
+  '/create-folder',
+  ensureAuthenticated,
+  fileController.createFolderPost
+)
+
+router.get('/folders/:id', fileController.folderDetailGet)
+
+router.post(
+  '/folders/:id/upload',
+  ensureAuthenticated,
+  upload.single('file'),
+  fileController.folderFileUpload
+)
+
+router.post(
+  '/folders/:id/update',
+  ensureAuthenticated,
+  fileController.updateFolderName
+)
+
+router.post(
+  '/folders/:id/delete',
+  ensureAuthenticated,
+  fileController.deleteFolder
 )
 
 router.get('/logout', userController.logoutUser)

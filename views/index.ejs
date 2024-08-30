@@ -3,16 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <title>Home</title>
+    <script>
+      function toggleUpdateForm(folderId) {
+        const updateForm = document.getElementById('update-form-' + folderId)
+        const nameInput = updateForm.querySelector('input[name="name"]')
+        updateForm.style.display =
+          updateForm.style.display === 'inline' ? 'none' : 'inline'
+        nameInput.focus()
+      }
+    </script>
   </head>
   <body>
     <% if (user) { %>
     <p>
       Welcome, <%= user.email %> | <a href="/logout">Logout</a> |
-      <a href="/upload">Upload File</a>
+      <a href="/upload-file">Upload File</a> |
     </p>
     <% } else { %>
     <p><a href="/login">Login</a> | <a href="/register">Register</a></p>
     <% } %>
     <h1>Home Page</h1>
+
+    <% if (folders && folders.length > 0) { %>
+    <h2>Your Folders</h2>
+    <ul>
+      <% folders.forEach(folder => { %>
+      <li>
+        <a href="/folders/<%= folder.id %>"><%= folder.name %></a>
+        <button onclick="toggleUpdateForm('<%= folder.id %>')">Update</button>
+        <form
+          id="update-form-<%= folder.id %>"
+          action="/folders/<%= folder.id %>/update"
+          method="POST"
+          style="display: none; inline"
+        >
+          <input type="text" name="name" value="<%= folder.name %>" required />
+          <button type="submit">Save</button>
+        </form>
+        <form
+          action="/folders/<%= folder.id %>/delete"
+          method="POST"
+          style="display: inline"
+        >
+          <button
+            type="submit"
+            onclick="return confirm('Are you sure you want to delete this folder? This will also delete all files in it.');"
+          >
+            Delete
+          </button>
+        </form>
+      </li>
+      <% }) %>
+    </ul>
+    <% } else { %>
+    <p>You have no folders.</p>
+    <% } %>
   </body>
 </html>

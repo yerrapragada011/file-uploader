@@ -17,6 +17,7 @@ model User {
   id       Int      @id @default(autoincrement())
   email    String   @unique
   password String
+  folders  Folder[]
 }
 
 model Session {
@@ -26,4 +27,24 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  files     File[]
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  size      Int
+  url       String
+  createdAt DateTime @default(now())
+  folderId  String
+  folder    Folder   @relation(fields: [folderId], references: [id])
 }

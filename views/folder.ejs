@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= folder.name %> - Folder</title>
+  </head>
+  <body>
+    <h1><%= folder.name %></h1>
+
+    <% if (folder.files && folder.files.length > 0) { %>
+    <h2>Files</h2>
+    <ul>
+      <% folder.files.forEach(file => { %>
+      <li>
+        <a href="<%= file.url %>"><%= file.name %></a>
+        (Size: <%= file.size %> bytes, Uploaded: <%= file.createdAt %>)
+        <a href="<%= file.url %>" download>Download</a>
+      </li>
+      <% }) %>
+    </ul>
+    <% } else { %>
+    <p>No files in this folder.</p>
+    <% } %>
+
+    <h2>Upload a File</h2>
+    <form
+      action="/folders/<%= folder.id %>/upload"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <div>
+        <label for="file">Choose File:</label>
+        <input type="file" name="file" id="file" required />
+      </div>
+      <div>
+        <button type="submit">Upload</button>
+      </div>
+    </form>
+
+    <p><a href="/">Go back to Home</a></p>
+  </body>
+</html>
