@@ -3,6 +3,7 @@ const router = express.Router()
 const userController = require('../controllers/userController')
 const fileController = require('../controllers/fileController')
 const multer = require('multer')
+const path = require('path')
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
@@ -11,14 +12,24 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login')
 }
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`)
+  }
+})
+
 const upload = multer({
-  dest: 'uploads/',
+  storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true)
     } else {
-      cb(new Error('Only image files are allowed!'), false)
+      req.fileValidationError = 'Only image files are allowed!'
+      cb(null, false)
     }
   }
 })
@@ -73,6 +84,12 @@ router.post(
   '/folders/:id/delete',
   ensureAuthenticated,
   fileController.deleteFolder
+)
+
+router.get(
+  '/folders/uploads/:id',
+  ensureAuthenticated,
+  fileController.viewFileGet
 )
 
 router.get('/logout', userController.logoutUser)

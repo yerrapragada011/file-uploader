@@ -12,8 +12,9 @@
     <ul>
       <% folder.files.forEach(file => { %>
       <li>
-        <a href="<%= file.url %>"><%= file.name %></a>
-        (Size: <%= file.size %> bytes, Uploaded: <%= file.createdAt %>)
+        <a href="<%= file.url %>" target="_blank"><%= file.name %></a>
+        (Size: <%= file.size %> bytes, Uploaded: <%= new
+        Date(file.createdAt).toLocaleString() %>)
         <a href="<%= file.url %>" download>Download</a>
       </li>
       <% }) %>

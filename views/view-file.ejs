@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title><%= file.name %> - File</title>
+  </head>
+  <body>
+    <h1><%= file.name %></h1>
+    <p>Size: <%= file.size %> bytes</p>
+    <p>Uploaded: <%= file.createdAt %></p>
+    <a href="<%= file.url %>" target="_blank">View File</a>
+    <a href="<%= file.url %>" download>Download File</a>
+    <p><a href="/">Go back to Home</a></p>
+  </body>
+</html>

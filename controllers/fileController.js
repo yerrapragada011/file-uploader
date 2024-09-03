@@ -1,4 +1,6 @@
 const { PrismaClient } = require('@prisma/client')
+const path = require('path')
+const fs = require('fs')
 
 const prisma = new PrismaClient()
 
@@ -15,6 +17,10 @@ exports.uploadFileGet = async (req, res) => {
 }
 
 exports.uploadFilePost = async (req, res) => {
+  if (req.fileValidationError) {
+    return res.status(400).render('error', { message: req.fileValidationError })
+  }
+
   if (!req.file) {
     return res.status(400).send('No file uploaded.')
   }
@@ -27,16 +33,34 @@ exports.uploadFilePost = async (req, res) => {
       .send('No folder selected. Please select a folder to upload the file.')
   }
 
-  await prisma.file.create({
-    data: {
-      name: req.file.originalname,
-      url: req.file.path,
-      size: req.file.size,
-      folderId: folderId
-    }
-  })
+  try {
+    const newFile = await prisma.file.create({
+      data: {
+        name: req.file.originalname,
+        size: req.file.size,
+        url: '',
+        folderId: folderId
+      }
+    })
 
-  res.redirect('/')
+    const fileName = `${newFile.id}${path.extname(req.file.originalname)}`
+    const oldPath = path.join('uploads', req.file.filename)
+    const newPath = path.join('uploads', fileName)
+
+    fs.renameSync(oldPath, newPath)
+
+    const fileUrl = `/uploads/${fileName}`
+
+    await prisma.file.update({
+      where: { id: newFile.id },
+      data: { url: fileUrl }
+    })
+
+    res.redirect('/')
+  } catch (error) {
+    console.error('Error saving file:', error)
+    res.status(500).render('error', { message: 'Server Error' })
+  }
 }
 
 exports.createFolderGet = async (req, res) => {
@@ -69,19 +93,52 @@ exports.folderDetailGet = async (req, res) => {
 }
 
 exports.folderFileUpload = async (req, res) => {
+  if (req.fileValidationError) {
+    return res.status(400).render('error', { message: req.fileValidationError })
+  }
+
+  if (!req.file) {
+    return res.status(400).render('error', { message: 'No file uploaded.' })
+  }
+
   const folderId = req.params.id
-  const { originalname, path, size } = req.file
+  const { originalname, path: tempPath, size } = req.file
 
-  await prisma.file.create({
-    data: {
-      name: originalname,
-      url: path,
-      size: size,
-      folderId: folderId
+  try {
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId }
+    })
+
+    if (!folder) {
+      return res.status(404).send('Folder not found')
     }
-  })
 
-  res.redirect(`/folders/${folderId}`)
+    const newFile = await prisma.file.create({
+      data: {
+        name: originalname,
+        size: size,
+        url: '',
+        folderId: folderId
+      }
+    })
+
+    const newFileName = `${newFile.id}${path.extname(originalname)}`
+    const newPath = path.join('uploads', newFileName)
+
+    fs.renameSync(tempPath, newPath)
+
+    const fileUrl = `/uploads/${newFileName}`
+
+    await prisma.file.update({
+      where: { id: newFile.id },
+      data: { url: fileUrl }
+    })
+
+    res.redirect(`/folders/${folderId}`)
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    res.status(500).render('error', { message: 'Server Error' })
+  }
 }
 
 exports.updateFolderName = async (req, res) => {
@@ -116,6 +173,29 @@ exports.deleteFolder = async (req, res) => {
     res.redirect('/')
   } catch (error) {
     console.error('Error deleting folder:', error)
+    res.status(500).send('Server Error')
+  }
+}
+
+exports.viewFileGet = async (req, res) => {
+  const fileId = req.params.id
+
+  console.log('Request ID:', fileId)
+
+  try {
+    const file = await prisma.file.findUnique({
+      where: { id: fileId }
+    })
+
+    console.log('Database File:', file)
+
+    if (!file) {
+      return res.status(404).send('File not found')
+    }
+
+    res.render('view-file', { file: file })
+  } catch (error) {
+    console.error('Error fetching file:', error)
     res.status(500).send('Server Error')
   }
 }
