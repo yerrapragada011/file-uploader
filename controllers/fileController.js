@@ -4,6 +4,14 @@ const fs = require('fs')
 
 const prisma = new PrismaClient()
 
+const cloudinary = require('cloudinary').v2
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+})
+
 exports.uploadFileGet = async (req, res) => {
   try {
     const folders = await prisma.folder.findMany({
@@ -34,27 +42,20 @@ exports.uploadFilePost = async (req, res) => {
   }
 
   try {
+    const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path, {
+      folder: `uploads/${folderId}`
+    })
+
     const newFile = await prisma.file.create({
       data: {
         name: req.file.originalname,
         size: req.file.size,
-        url: '',
+        url: cloudinaryResponse.secure_url,
         folderId: folderId
       }
     })
 
-    const fileName = `${newFile.id}${path.extname(req.file.originalname)}`
-    const oldPath = path.join('uploads', req.file.filename)
-    const newPath = path.join('uploads', fileName)
-
-    fs.renameSync(oldPath, newPath)
-
-    const fileUrl = `/uploads/${fileName}`
-
-    await prisma.file.update({
-      where: { id: newFile.id },
-      data: { url: fileUrl }
-    })
+    fs.unlinkSync(req.file.path)
 
     res.redirect('/')
   } catch (error) {
@@ -102,7 +103,6 @@ exports.folderFileUpload = async (req, res) => {
   }
 
   const folderId = req.params.id
-  const { originalname, path: tempPath, size } = req.file
 
   try {
     const folder = await prisma.folder.findUnique({
@@ -113,26 +113,20 @@ exports.folderFileUpload = async (req, res) => {
       return res.status(404).send('Folder not found')
     }
 
+    const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path, {
+      folder: `uploads/${folderId}`
+    })
+
     const newFile = await prisma.file.create({
       data: {
-        name: originalname,
-        size: size,
-        url: '',
+        name: req.file.originalname,
+        size: req.file.size,
+        url: cloudinaryResponse.secure_url,
         folderId: folderId
       }
     })
 
-    const newFileName = `${newFile.id}${path.extname(originalname)}`
-    const newPath = path.join('uploads', newFileName)
-
-    fs.renameSync(tempPath, newPath)
-
-    const fileUrl = `/uploads/${newFileName}`
-
-    await prisma.file.update({
-      where: { id: newFile.id },
-      data: { url: fileUrl }
-    })
+    fs.unlinkSync(req.file.path)
 
     res.redirect(`/folders/${folderId}`)
   } catch (error) {
